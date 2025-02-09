@@ -1,5 +1,6 @@
 import json
-from Shunting_Yard import shunting_yard, insert_concatenation_operators, thompson_construction, generate_adjacency_matrix, print_adjacency_matrix
+import time  # Import time module for timing the simulation
+from regex_conversion import shunting_yard, insert_concatenation_operators, thompson_construction, generate_adjacency_matrix, print_adjacency_matrix
 from Construccion_Subconjuntos import subset_construction
 from Minimization import minimize_dfa, save_minimized_dfa_to_json
 
@@ -7,21 +8,23 @@ def simulate_dfa(dfa, input_string):
     current_state = dfa['start']
     transitions = []
 
+    start_time = time.time()  # Start timing the simulation
+
     for symbol in input_string:
         if symbol in dfa['transitions'][current_state]:
             next_state = dfa['transitions'][current_state][symbol]
-            transitions.append((current_state, symbol, next_state))
+            transitions.append((current_state, symbol, next_state))  # Record the transition
             current_state = next_state
         else:
             return "NO", transitions  # Transición inválida, cadena no aceptada
 
     if current_state in dfa['accept']:
-        return "YES", transitions
+        return "YES", transitions, elapsed_time
     else:
-        return "NO", transitions
+        return "NO", transitions, elapsed_time
 
 # Paso 1: Solicitar expresión regular y convertirla a postfix
-regex = input("Ingresa una expresión regular (usa '_' para ε): ")
+regex = input("Ingresa una expresión regular: ")
 regex = insert_concatenation_operators(regex)
 postfix = shunting_yard(regex)
 print("Postfix:", postfix)
@@ -69,9 +72,17 @@ print("El AFD minimizado completo ha sido guardado en 'minimized_dfa_complete.js
 
 # Paso 6: Simular el AFD con una cadena de entrada
 input_string = input("Ingresa la cadena a validar: ")
-result, transitions = simulate_dfa(minimized_dfa, input_string)
+result, transitions, elapsed_time = simulate_dfa(minimized_dfa, input_string)
 print(f"La cadena '{input_string}' es {'aceptada' if result == 'YES' else 'no aceptada'} por el AFD.")
+print(f"Tiempo de validación: {elapsed_time:.6f} segundos")
+
 
 print("Transiciones realizadas durante la validación:")
+
+if transitions:
+    for transition in transitions:
+        print(transition)
+else:
+    print("No se realizaron transiciones.")
 for transition in transitions:
     print(transition)
