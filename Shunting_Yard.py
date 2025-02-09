@@ -73,8 +73,11 @@ def thompson_construction(postfix):
             states.append(start)
             states.append(end)
             stack.append(NFA(start, end))
-    
+            
+    print(f"Construyendo NFA para postfix: {postfix}")
     return stack.pop(), states
+
+    
 
 # Función para agregar operadores de concatenación explícitos
 def insert_concatenation_operators(regex):
@@ -122,7 +125,8 @@ def generate_adjacency_matrix(states):
             for target in transitions:
                 j = state_names.index(target.name)
                 matrix[i][j] = symbol if symbol != '_' else 'ε'
-    
+                
+    print("Generando matriz de adyacencia")
     return matrix
 
 # Función para imprimir la matriz de adyacencia
