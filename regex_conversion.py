@@ -82,36 +82,50 @@ def thompson_construction(postfix):
 # Función para agregar operadores de concatenación explícitos
 def insert_concatenation_operators(regex):
     result = []
-    for i in range(len(regex)):
+    i = 0
+    while i < len(regex):
         result.append(regex[i])
         if i + 1 < len(regex):
-            if (regex[i] not in operators and regex[i] != '(' and regex[i + 1] not in operators and regex[i + 1] != ')'):
+            if (regex[i] not in operators and regex[i] not in '()' and
+                regex[i + 1] not in operators and regex[i + 1] not in '()'):
                 result.append('.')
-            if (regex[i] == '*' and regex[i + 1] not in operators and regex[i + 1] != ')'):
+            elif regex[i] == '*' and regex[i + 1] not in operators and regex[i + 1] not in '()':
                 result.append('.')
+        i += 1
     return ''.join(result)
+
 
 # Función para convertir una expresión regular a postfix (Shunting Yard)
 def shunting_yard(regex):
-    output.clear()
-    stack.clear()
+    output = []
+    stack = []
+    precedence = {'*': 3, '.': 2, '|': 1}
+
+    def precedence_of(op):
+        return precedence.get(op, 0)
+
     for token in regex:
-        if token not in operators and token != '(' and token != ')':
+        if token not in precedence and token not in '()':
             output.append(token)
         elif token == '(':
             stack.append(token)
         elif token == ')':
             while stack and stack[-1] != '(':
                 output.append(stack.pop())
-            stack.pop()
-        else:
-            while stack and stack[-1] != '(' and precedence[token] <= precedence[stack[-1]]:
-                output.append(stack.pop())
-            stack.append(token)
-    
+            stack.pop()  # Pop the '('
+        else:  # Operators *, ., |
+            if token == '*':
+                while stack and precedence_of(stack[-1]) >= precedence_of(token):
+                    output.append(stack.pop())
+                output.append(token)
+            else:
+                while stack and stack[-1] != '(' and precedence_of(stack[-1]) >= precedence_of(token):
+                    output.append(stack.pop())
+                stack.append(token)
+
     while stack:
         output.append(stack.pop())
-    
+
     return ''.join(output)
 
 # Función para generar la matriz de adyacencia
@@ -145,29 +159,27 @@ def save_postfix_to_json(postfix, filename):
     with open(filename, 'w') as file:
         json.dump(data, file, indent=4)
 
-# Solicitar al usuario que ingrese una expresión regular
-regex = input("Ingresa una expresión regular (usa '_' para ε): ")
+    # Solicitar al usuario que ingrese una expresión regular
+    regex = input("Ingresa una expresión regular: ")
 
-# Insertar operadores de concatenación explícitos
-regex = insert_concatenation_operators(regex)
+    # Insertar operadores de concatenación explícitos
+    regex = insert_concatenation_operators(regex)
 
-# Convertir la expresión regular a postfix
-postfix = shunting_yard(regex)
+    # Convertir la expresión regular a postfix
+    postfix = shunting_yard(regex)
 
-# Mostrar el resultado
-print("Postfix:", postfix)
+    # Mostrar el resultado
+    print("Postfix:", postfix)
 
-# Guardar el resultado en un archivo JSON
-save_postfix_to_json(postfix, 'postfix_output.json')
-print("El resultado ha sido guardado en 'postfix_output.json'")
+    # Guardar el resultado en un archivo JSON
+    save_postfix_to_json(postfix, 'postfix_output.json')
+    print("El resultado ha sido guardado en 'postfix_output.json'")
 
-# Construir el NFA usando el algoritmo de Thompson
-nfa, states = thompson_construction(postfix)
+    # Construir el NFA usando el algoritmo de Thompson
+    nfa, states = thompson_construction(postfix)
 
-# Generar y mostrar la matriz de adyacencia
-print("AFN construido.")
-adjacency_matrix = generate_adjacency_matrix(states)
-print("Matriz de adyacencia:")
-print_adjacency_matrix(adjacency_matrix, states)
-
-
+    # Generar y mostrar la matriz de adyacencia
+    print("AFN construido.")
+    adjacency_matrix = generate_adjacency_matrix(states)
+    print("Matriz de adyacencia:")
+    print_adjacency_matrix(adjacency_matrix, states)
